@@ -13,7 +13,7 @@ using ClearSCADA.DBObjFramework;
 // NEED this AssemblySupportLink otherwise the server will complain about bad metadata when it loads the module. 
 [assembly:AssemblySupportLink("https://jpisolutions.ca")]
 // Commented out until the driver task is built
-//[assembly:DriverTask("JPIIotHubDriver.exe")]
+[assembly:DriverTask("JPIIotHubDriver.exe")]
 
 
 // Install hooks
@@ -23,7 +23,7 @@ public class IoTHubInstaller : DriverInstaller
 }
 
 
-namespace IoTHubDriver
+namespace IoTHubDBModule
 {
     public class IoTHubDriverModule : DBModule
     {
@@ -58,8 +58,8 @@ namespace IoTHubDriver
     //[EventCategory("JPIAIoTHubScanner", "IoT Hub Scanner", 0x04510020)]
     public class AzureIoTHubScanner : Scanner
     {
-        [Label("In Service",1,1)]
-        [ConfigField("In Service", "Controls whether the scanner is active.", 1,2, 0x0350501B)]
+        [Label("In Service", 1, 1)]
+        [ConfigField("In Service", "Controls whether the scanner is active.", 1, 2, 0x0350501B)]
         public override Boolean InService
         {
             get
@@ -86,11 +86,11 @@ namespace IoTHubDriver
         [Label("Scan Rate", 6, 1)]
         [ConfigField("Scan Rate", "The rate of export to IoT hub in ms.", 6, 2, 0x03505045)]
         [Interval(IntervalType.Milliseconds)]
-        public UInt32 ScanRate;
+        public UInt32 ScanRate = 300000;
 
         [Label("Scan Offset", 7, 1)]
         [ConfigField("Scan Offset", "Sets the time that IoT Hub Exports are synchronized to.", 7, 2, 0x0350504D, Length=32, Flags =FormFlags.OpcOffset)]
-        public String ScanOffset;
+        public String ScanOffset = "Hour";
 
         [DataField("Read Count", "The number of messages the export scanner has received from Azure IoT Hub.", 0x03505047)]
         public UInt32 ReadCount;
