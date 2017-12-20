@@ -35,5 +35,5 @@ using System.Runtime.InteropServices;
 // We are using the ClearSCADA major.minor.build numbers for the driver so we can 
 // identify which version it was compiled for. The revision number will be used to 
 // denote our internal versions, starting with 0. 
-[assembly: AssemblyVersion("6.78.6533.0")]
-[assembly: AssemblyFileVersion("6.78.6553.0")]
+[assembly: AssemblyVersion("6.78.6533.2")]
+[assembly: AssemblyFileVersion("6.78.6533.2")]
