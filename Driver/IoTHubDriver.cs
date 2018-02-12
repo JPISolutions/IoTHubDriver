@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 using ClearSCADA.DBObjFramework;
 using ClearSCADA.DriverFramework;
 using IoTHubDBModule;
+using System.IO;
+using System.Data.Odbc;
+using System.Data;
 
 namespace IoTHubDriver
 {
@@ -49,7 +52,34 @@ namespace IoTHubDriver
         public override void OnScan()
         {
             // Code for each scan to go here. 
-            App.Log("Scan on scanner " + Convert.ToString(DBScanner.Id) + " Executed");
+
+            //added here
+            File.WriteAllText(@"C:\testout.txt", DBScanner.AzureIoTHub.EndPoint +"-gideond");
+            App.Log("Scan on scanner " + Convert.ToString(DBScanner.AzureIoTHub.EndPoint) + " Executed");
+
+            void getdata()
+            {
+                string s = "DRIVER={ClearSCADA Driver};Server=MAIN;UID=SuperUser;PWD=SCADAAdmin;LOCALTIME=True;LOGINTIMEOUT=6000";
+                System.Data.Odbc.OdbcConnection con = new System.Data.Odbc.OdbcConnection();
+                con.ConnectionString = s;
+                con.Open();
+                /*
+                The data we want will be in the CDBPOINT table.
+                Something like this: 
+                */
+                string q = @"SELECT
+                FullName, Name, CurrentValueAsReal, CurrentTime
+                FROM
+                CDBPOINT
+                WHERE
+                IIoTExport = TRUE";
+
+                OdbcDataAdapter adap = new OdbcDataAdapter(q, con);
+                DataTable dat = new DataTable();
+                adap.Fill(dat);
+            }
+
+           
         }
 
 
