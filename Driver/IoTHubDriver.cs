@@ -53,9 +53,9 @@ namespace IoTHubDriver
         {
             // Code for each scan to go here. 
 
-            //added here
-            File.WriteAllText(@"C:\testout.txt", DBScanner.AzureIoTHub.EndPoint +"-gideond");
-            App.Log("Scan on scanner " + Convert.ToString(DBScanner.AzureIoTHub.EndPoint) + " Executed");
+            //tests. added here
+            //File.WriteAllText(@"C:\testout.txt", DBScanner.AzureIoTHub.EndPoint +"-gideond");
+            //App.Log("Scan on scanner " + Convert.ToString(DBScanner.AzureIoTHub.EndPoint) + " Executed");
 
             void getdata()
             {

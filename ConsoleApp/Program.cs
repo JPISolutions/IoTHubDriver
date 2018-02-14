@@ -24,8 +24,7 @@ namespace ConsoleApp
                 FullName, Name, CurrentValueAsReal, CurrentTime
                 FROM
                 CDBPOINT
-                WHERE
-                IIoTExport = TRUE";
+                ";
 
             OdbcDataAdapter adap = new OdbcDataAdapter(q, con);
             DataTable dat = new DataTable();
