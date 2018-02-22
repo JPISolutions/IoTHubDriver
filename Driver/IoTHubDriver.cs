@@ -25,7 +25,7 @@ namespace IoTHubDriver
                 if (App.Init(new IoTHubDriverModule(), args))
 
                     // Do any initialization here
-                    App.Log("C# sample driver started");
+                    App.Log("IoT Azure driver started");
 
                 // Start the main loop
                 App.MainLoop();
@@ -40,114 +40,85 @@ namespace IoTHubDriver
         const string IOT_HUB_CONN_STRING = "HostName=iothub-jpisol.azure-devices.net;DeviceId=CS000001;SharedAccessKey=ayf8GRENPhBw6oSdwQo0d2JU/k6UinA3F0XPU17fdpE=";
         const string IOT_HUB_DEVICE_LOCATION = "_some_location.";
         const string IOT_HUB_DEVICE = "CS000001"; //HostName=iothub-jpisol.azure-devices.net;DeviceId=CS000001;SharedAccessKey=ayf8GRENPhBw6oSdwQo0d2JU/k6UinA3F0XPU17fdpE=
+
+        WebClient client = new WebClient();
+
+        /* Constructor */
+        public DrvCSScanner()
+        { }
+
+
         public override SourceStatus OnDefine()
         {
             // Code for when the scanner is enabled. 
             // Log the scanner state to the log file and set the scan rate and offset to those
             // set on the object. 
-            App.Log("Scanner " + Convert.ToString(DBScanner.Id) + " enabled.");
-            SetScanRate(DBScanner.ScanRate, DBScanner.ScanOffset);
-            return SourceStatus.Online;
+            App.Log("OnDefine: Scanner Startup...");
+            try
+            {
+
+                App.Log("OnDefine: Set ScanRate:" + Convert.ToString(DBScanner.ScanRate) + " Set Offset: " + Convert.ToString(DBScanner.ScanOffset));
+                SetScanRate(DBScanner.ScanRate, DBScanner.ScanOffset, true);
+                
+                App.Log("OnDefine: Scanner Online.");
+                return SourceStatus.Online;
+            }
+            catch (Exception e)
+            {
+                App.Log("OnDefine: Uh oh, we had a problem connecting.");
+                App.Log("OnDefine: " + e.Message);
+                App.Log("OnDefine: Scanner Failed.");
+                return SourceStatus.Failed;
+
+            }
+
+
+
+
         }
 
         public override void OnUnDefine()
         {
             // Code for when the scanner is disabled or about to be saved
             // Log to the log file and set the status to Offline.
-            App.Log("Scanner " + Convert.ToString(DBScanner.Id) + " disabled.");
+            App.Log("OnUnDefine: Scanner " + Convert.ToString(DBScanner.Id) + " disabled.");
             SetStatus(SourceStatus.Offline);
+            base.OnUnDefine();
         }
-
-        Random rnd = new Random();
+        
         public override void OnScan()
         {
-
+            
+            try
             {
-                //File.WriteAllText(@"C:\" + rnd.NextDouble().ToString() + "__A.txt", "testing \n");
+                App.Log("OnScan: Start Scan");
 
-                //---------
-                //var tsk = SendDictToIoTHubAsync(new Dictionary<string, string> { { "key", "val" }, { "key2", "val2" } });
-                //tsk.RunSynchronously();
+                App.Log("Attempt a connection to Google.");
+                Stream stream = client.OpenRead("https://google.com");
 
+                App.Log("OnScan: Read the HTTP stream");
+                StreamReader reader = new StreamReader(stream);
 
-                try
-                {
-                    Process.Start(@"C:\Windows\notepad.exe", "Blah");
+                App.Log("OnScan: Read the content.");
+                string content = reader.ReadToEnd();
 
-                    File.AppendAllText(@"C:\stat.txt", "starting net call");
-                    WebClient client = new WebClient();
-                    Stream stream = client.OpenRead("http://google.com");
-                    StreamReader reader = new StreamReader(stream);
-                    String content = reader.ReadToEnd();
-                }
-                catch (Exception e)
-                {
-                    File.AppendAllText(@"C:\netcall.txt", e.Message);
-                    File.AppendAllText(@"C:\netcall.txt", e.StackTrace);
-                }
+                App.Log("OnScan:" + content);
+
+                App.Log("OnScan: Scan Completed.");
+            }
+            catch (Exception e)
+            {
+                App.Log("OnScan: Uh oh, something went wrong.");
+
+                App.Log("OnScan: Raising an alarm.");
+                SetStatus(SourceStatus.Failed);
+                SetFailReason(e.Message);
+
+                App.Log("OnScan: Error: " + e.Message);
                 
-
-
-
-
-                string s = "DRIVER={ClearSCADA Driver};Server=Local;UID=;PWD=;LOCALTIME=True;LOGINTIMEOUT=6000";
-                System.Data.Odbc.OdbcConnection con = new System.Data.Odbc.OdbcConnection();
-                con.ConnectionString = s;
-                con.Open();
-                /*
-                The data we want will be in the CDBPOINT table.
-                Something like this: 
-                */
-                string q = @"SELECT
-                FullName, Name, CurrentValueAsReal, CurrentTime
-                FROM
-                CDBPOINT
-                ";
-
-                OdbcDataAdapter adap = new OdbcDataAdapter(q, con);
-                DataTable dat = new DataTable();
-                adap.Fill(dat);
-                File.WriteAllText(@"C:\rows.txt", dat.Rows.Count.ToString());
-                //tsk.GetAwaiter().OnCompleted(() => { File.WriteAllText(@"C:\completed.txt", "jhfjghj"); });
-                // Code for each scan to go here. 
-
-                //tests. added here
-                //File.WriteAllText(@"C:\testout.txt", DBScanner.AzureIoTHub.EndPoint +"-gideond");
-                //App.Log("Scan on scanner " + Convert.ToString(DBScanner.AzureIoTHub.EndPoint) + " Executed");
-
-                //DataTable GetDataFromScada()
-                //{
-                //    string s = "DRIVER={ClearSCADA Driver};Server=MAIN;UID=SuperUser;PWD=SCADAAdmin;LOCALTIME=True;LOGINTIMEOUT=6000";
-                //    System.Data.Odbc.OdbcConnection con = new System.Data.Odbc.OdbcConnection();
-                //    con.ConnectionString = s;
-                //    con.Open();
-                //    /*
-                //    The data we want will be in the CDBPOINT table.
-                //    Something like this: 
-                //    */
-                //    string q = @"SELECT
-                //    FullName, Name, CurrentValueAsReal, CurrentTime
-                //    FROM
-                //    CDBPOINT
-                //    WHERE
-                //    IIoTExport = TRUE";
-
-                //    OdbcDataAdapter adap = new OdbcDataAdapter(q, con);
-                //    DataTable dat = new DataTable();
-                //    adap.Fill(dat);
-                //    return dat;
             }
-
-
-            async Task SendDictToIoTHubAsync(Dictionary<string, string> dict)
-            {
-                deviceClient = DeviceClient.CreateFromConnectionString(IOT_HUB_CONN_STRING, Microsoft.Azure.Devices.Client.TransportType.Mqtt);
-
-                var msg_dict = new Message(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(dict)));
-                await deviceClient.SendEventAsync(msg_dict);
-
-            }
-
+                
+            
         }
 
 
