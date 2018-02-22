@@ -37,11 +37,10 @@ namespace IoTHubDriver
     {
 
         static DeviceClient deviceClient;
-        const string IOT_HUB_CONN_STRING = "HostName=iothub-jpisol.azure-devices.net;DeviceId=CS000001;SharedAccessKey=ayf8GRENPhBw6oSdwQo0d2JU/k6UinA3F0XPU17fdpE=";
-        const string IOT_HUB_DEVICE_LOCATION = "_some_location.";
-        const string IOT_HUB_DEVICE = "CS000001"; //HostName=iothub-jpisol.azure-devices.net;DeviceId=CS000001;SharedAccessKey=ayf8GRENPhBw6oSdwQo0d2JU/k6UinA3F0XPU17fdpE=
-
-        WebClient client = new WebClient();
+        const string IOT_HUB_CONN_STRING = "HostName=iothub-jpisol.azure-devices.net;DeviceId=deviceone;SharedAccessKey=qmniT3hIn4c9E3cLsVRhrUr+LLdqeu0+lzPz8yVMU3U=";
+        const string IOT_HUB_DEVICE_LOCATION = "_that_location.";
+        const string IOT_HUB_DEVICE = "deviceone"; //HostName=iothub-jpisol.azure-devices.net;DeviceId=CS000001;SharedAccessKey=ayf8GRENPhBw6oSdwQo0d2JU/k6UinA3F0XPU17fdpE=
+        
 
         /* Constructor */
         public DrvCSScanner()
@@ -59,7 +58,10 @@ namespace IoTHubDriver
 
                 App.Log("OnDefine: Set ScanRate:" + Convert.ToString(DBScanner.ScanRate) + " Set Offset: " + Convert.ToString(DBScanner.ScanOffset));
                 SetScanRate(DBScanner.ScanRate, DBScanner.ScanOffset, true);
-                
+
+                App.Log("OnDefine: Connect to IoT Hub using connection string.");
+                deviceClient = DeviceClient.CreateFromConnectionString(IOT_HUB_CONN_STRING, Microsoft.Azure.Devices.Client.TransportType.Mqtt);
+
                 App.Log("OnDefine: Scanner Online.");
                 return SourceStatus.Online;
             }
@@ -93,16 +95,8 @@ namespace IoTHubDriver
             {
                 App.Log("OnScan: Start Scan");
 
-                App.Log("Attempt a connection to Google.");
-                Stream stream = client.OpenRead("https://google.com");
-
-                App.Log("OnScan: Read the HTTP stream");
-                StreamReader reader = new StreamReader(stream);
-
-                App.Log("OnScan: Read the content.");
-                string content = reader.ReadToEnd();
-
-                App.Log("OnScan:" + content);
+                App.Log("OnScan: Send Message to Azure IoT Hub");
+                var tsk = SendDictToIoTHubAsync(new Dictionary<string, string> { { "key", "val" }, { "key2", "val2" } });
 
                 App.Log("OnScan: Scan Completed.");
             }
@@ -121,6 +115,13 @@ namespace IoTHubDriver
             
         }
 
+        async Task SendDictToIoTHubAsync(Dictionary<string, string> dict)
+        {
 
+
+            var msg_dict = new Message(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(dict)));
+            await deviceClient.SendEventAsync(msg_dict);
+
+        }
     }
 }

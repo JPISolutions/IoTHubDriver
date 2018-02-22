@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Runtime.Remoting.Messaging;
 
-using ClearSCADA.DBObjFramework; 
+using ClearSCADA.DBObjFramework;
 
 
 // Add in the driver category and description for proper registration with the CS server app
