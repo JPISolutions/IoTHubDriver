@@ -26,7 +26,7 @@ namespace IoTHubDriver
 
                     // Do any initialization here
                     App.Log("IoT Azure driver started");
-
+                 
                 // Start the main loop
                 App.MainLoop();
             }
@@ -36,16 +36,11 @@ namespace IoTHubDriver
     public class DrvCSScanner : DriverScanner<AzureIoTHubScanner>
     {
 
-        static DeviceClient deviceClient;
-        const string IOT_HUB_CONN_STRING = "HostName=iothub-jpisol.azure-devices.net;DeviceId=deviceone;SharedAccessKey=qmniT3hIn4c9E3cLsVRhrUr+LLdqeu0+lzPz8yVMU3U=";
-        const string IOT_HUB_DEVICE_LOCATION = "_that_location.";
-        const string IOT_HUB_DEVICE = "deviceone"; //HostName=iothub-jpisol.azure-devices.net;DeviceId=CS000001;SharedAccessKey=ayf8GRENPhBw6oSdwQo0d2JU/k6UinA3F0XPU17fdpE=
-        
+        static DeviceClient deviceClient;        
 
         /* Constructor */
         public DrvCSScanner()
         { }
-
 
         public override SourceStatus OnDefine()
         {
@@ -60,7 +55,7 @@ namespace IoTHubDriver
                 SetScanRate(DBScanner.ScanRate, DBScanner.ScanOffset, true);
 
                 App.Log("OnDefine: Connect to IoT Hub using connection string.");
-                deviceClient = DeviceClient.CreateFromConnectionString(IOT_HUB_CONN_STRING, Microsoft.Azure.Devices.Client.TransportType.Mqtt);
+                deviceClient = DeviceClient.CreateFromConnectionString(DBScanner.AzureIoTHub.PrimaryConnectString, Microsoft.Azure.Devices.Client.TransportType.Mqtt);
 
                 App.Log("OnDefine: Scanner Online.");
                 return SourceStatus.Online;
@@ -73,9 +68,6 @@ namespace IoTHubDriver
                 return SourceStatus.Failed;
 
             }
-
-
-
 
         }
 
@@ -93,12 +85,13 @@ namespace IoTHubDriver
             
             try
             {
-                App.Log("OnScan: Start Scan");
+                App.Log("OnScan: <!-- Start Scan");
 
-                App.Log("OnScan: Send Message to Azure IoT Hub");
+                App.Log("OnScan: Sending Message to Azure IoT Hub");
                 var tsk = SendDictToIoTHubAsync(new Dictionary<string, string> { { "key", "val" }, { "key2", "val2" } });
 
-                App.Log("OnScan: Scan Completed.");
+                App.Log("OnScan: Scan Complete -->");
+                
             }
             catch (Exception e)
             {
@@ -122,6 +115,28 @@ namespace IoTHubDriver
             var msg_dict = new Message(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(dict)));
             await deviceClient.SendEventAsync(msg_dict);
 
+        }
+
+        private static void get_data_from_scada()
+        {
+
+            string s = "DRIVER={ClearSCADA Driver};Server=Local;UID=;PWD=;LOCALTIME=True;LOGINTIMEOUT=6000";
+            System.Data.Odbc.OdbcConnection con = new System.Data.Odbc.OdbcConnection();
+            con.ConnectionString = s;
+            con.Open();
+            /*
+            The data we want will be in the CDBPOINT table.
+            Something like this: 
+            */
+            string q = @"SELECT
+                FullName, Name, CurrentValueAsReal, CurrentTime
+                FROM
+                CDBPOINT
+                ";
+
+            OdbcDataAdapter adap = new OdbcDataAdapter(q, con);
+            DataTable dat = new DataTable();
+            adap.Fill(dat);
         }
     }
 }
