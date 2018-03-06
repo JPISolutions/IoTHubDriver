@@ -42,24 +42,42 @@ namespace IoTHubDriver
         }
 
         static DeviceClient deviceClient;
-
-        string IOT_HUB_CONN_STRING = DBScanner.AzureIoTHub.PrimaryConnectString;
+        
        
         public override SourceStatus OnDefine()
         {
             // Code for when the scanner is enabled. 
             // Log the scanner state to the log file and set the scan rate and offset to those
             // set on the object. 
-            App.Log("Scanner " + Convert.ToString(DBScanner.Id) + " enabled.");
-            SetScanRate(DBScanner.ScanRate, DBScanner.ScanOffset);
-            return SourceStatus.Online;
+            App.Log("OnDefine: Scanner " + Convert.ToString(DBScanner.Id) + " Startup...");
+
+            try
+            {
+                App.Log("OnDefine: Set ScanRate: " + Convert.ToString(DBScanner.ScanRate) + " Set Offset: " + Convert.ToString(DBScanner.ScanOffset));
+                SetScanRate(DBScanner.ScanRate, DBScanner.ScanOffset, true);
+
+                App.Log("OnDefine: Connect to IoT Hub using primary connection string.");
+                deviceClient = DeviceClient.CreateFromConnectionString(DBScanner.AzureIoTHub.PrimaryConnectString, Microsoft.Azure.Devices.Client.TransportType.Mqtt);
+
+                App.Log("OnDefine: Scanner Online.");
+                return SourceStatus.Online;
+            }
+
+            catch (Exception e)
+            {
+                App.Log("OnDefine: Uh oh, we had a problem connecting.");
+                App.Log("OnDefine: " + e.Message);
+                App.Log("OnDefine: Scanner Failed.");
+                return SourceStatus.Failed;
+
+            }
         }
 
         public override void OnUnDefine()
         {
             // Code for when the scanner is disabled or about to be saved
             // Log to the log file and set the status to Offline.
-            App.Log("Scanner " + Convert.ToString(DBScanner.Id) + " disabled.");
+            App.Log("OnUnDefine: Scanner " + Convert.ToString(DBScanner.Id) + " disabled.");
             SetStatus(SourceStatus.Offline);
         }
 
@@ -67,89 +85,58 @@ namespace IoTHubDriver
         public override void OnScan()
         {
 
+            try
             {
+                App.Log("OnScan: Start Scan");
+                App.Log("OnScan: Connect ODBC");
 
-                //---------
-                //var tsk = SendDictToIoTHubAsync(new Dictionary<string, string> { { "key", "Dev_VM" }, { "key2", "JPISOLUTIONS_updated" } });
-                // Removed due to sync error
-                //tsk.RunSynchronously();
-                
-           
-                    try
-                    {
-
-
-                }
-                catch (Exception e)
-                {
-                    Log(e.Message +"JPItest01");
-                    Log(e.StackTrace);
-                }
-                
-
-
-
-
+                // Can I get the SYSTEM name from inside the driver?
                 string s = "DRIVER={ClearSCADA Driver};Server=Local;UID=;PWD=;LOCALTIME=True;LOGINTIMEOUT=6000";
                 System.Data.Odbc.OdbcConnection con = new System.Data.Odbc.OdbcConnection();
                 con.ConnectionString = s;
                 con.Open();
-                /*
-                The data we want will be in the CDBPOINT table.
-                Something like this: 
-                */
-                string q = @"SELECT ID, FULLNAME, CURRENTVALUEASREAL, CURRENTQUALITYDESC, CURRENTTIME FROM CDBPOINT";
 
-                OdbcDataAdapter adap = new OdbcDataAdapter(q, con);
+                App.Log("OnScan: ODBC Connected");
+                App.Log("OnScan: Run ODBC Query. Query: " + DBScanner.Query);
+                
+                OdbcDataAdapter adap = new OdbcDataAdapter(DBScanner.Query, con);
                 DataTable dat = new DataTable();
                 adap.Fill(dat);
                 var json_data = JsonConvert.SerializeObject(dat);
-                //File.WriteAllText(@"C:\rows1.txt", json_data);
-                SendStrToIoTHubAsync(json_data);
-                //tsk.GetAwaiter().OnCompleted(() => { File.WriteAllText(@"C:\completed.txt", "jhfjghj"); });
-                // Code for each scan to go here. 
 
-                //tests. added here
-                //File.WriteAllText(@"C:\testout.txt", DBScanner.AzureIoTHub.EndPoint +"-gideond");
-                //App.Log("Scan on scanner " + Convert.ToString(DBScanner.AzureIoTHub.EndPoint) + " Executed");
+                App.Log("OnScan: Converted query results to JSON.");
 
-                //DataTable GetDataFromScada()
-                //{
-                //    string s = "DRIVER={ClearSCADA Driver};Server=MAIN;UID=SuperUser;PWD=SCADAAdmin;LOCALTIME=True;LOGINTIMEOUT=6000";
-                //    System.Data.Odbc.OdbcConnection con = new System.Data.Odbc.OdbcConnection();
-                //    con.ConnectionString = s;
-                //    con.Open();
-                //    /*
-                //    The data we want will be in the CDBPOINT table.
-                //    Something like this: 
-                //    */
-                //    string q = @"SELECT
-                //    FullName, Name, CurrentValueAsReal, CurrentTime
-                //    FROM
-                //    CDBPOINT
-                //    WHERE
-                //    IIoTExport = TRUE";
+                App.Log("OnScan: Send Message to Azure IoT Hub");
+                var tsk = SendStrToIoTHubAsync(json_data);
+                
+                App.Log("OnScan: Scan Completed.");
 
-                //    OdbcDataAdapter adap = new OdbcDataAdapter(q, con);
-                //    DataTable dat = new DataTable();
-                //    adap.Fill(dat);
-                //    return dat;
             }
 
+            catch (Exception e)
+            {
+                App.Log("OnScan: Uh oh, something went wrong.");
 
+                App.Log("OnScan: Raising an alarm.");
+                SetStatus(SourceStatus.Failed);
+                SetFailReason(e.Message);
+
+                App.Log("OnScan: Error: " + e.Message);
+            }
+                
+            // Useful for sending dictionaries to IoT Hub
             async Task SendDictToIoTHubAsync(Dictionary<string, string> dict)
             {
-                deviceClient = DeviceClient.CreateFromConnectionString(IOT_HUB_CONN_STRING, Microsoft.Azure.Devices.Client.TransportType.Mqtt);
-
+                
                 var msg_dict = new Message(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(dict)));
                 await deviceClient.SendEventAsync(msg_dict);
 
             }
 
+            // Useful for sending JSON strings to IoT Hub
             async Task SendStrToIoTHubAsync(string str )
             {
-                deviceClient = DeviceClient.CreateFromConnectionString(IOT_HUB_CONN_STRING, Microsoft.Azure.Devices.Client.TransportType.Mqtt);
-
+                
                 var msg_dict = new Message(Encoding.UTF8.GetBytes(str));
                 await deviceClient.SendEventAsync(msg_dict);
 
