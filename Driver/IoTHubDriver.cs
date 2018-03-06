@@ -91,7 +91,8 @@ namespace IoTHubDriver
                 App.Log("OnScan: Connect ODBC");
 
                 // Can I get the SYSTEM name from inside the driver?
-                string s = "DRIVER={ClearSCADA Driver};Server=MAIN;UID=;PWD=;LOCALTIME=True;LOGINTIMEOUT=6000";
+                // How can I run this against a DB that is protected/secured?
+                string s = "DRIVER={ClearSCADA Driver};Server=MAIN;UID=;PWD=;LOCALTIME=False;LOGINTIMEOUT=6000";
                 System.Data.Odbc.OdbcConnection con = new System.Data.Odbc.OdbcConnection();
                 con.ConnectionString = s;
                 con.Open();
