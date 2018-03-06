@@ -12,7 +12,6 @@ using ClearSCADA.DBObjFramework;
 [assembly:Description("JPI Solutions IoT Hub Driver")]
 // NEED this AssemblySupportLink otherwise the server will complain about bad metadata when it loads the module. 
 [assembly:AssemblySupportLink("https://jpisolutions.ca")]
-// Commented out until the driver task is built
 [assembly:DriverTask("JPIIotHubDriver.exe")]
 
 
@@ -91,6 +90,10 @@ namespace IoTHubDBModule
         [Label("Scan Offset", 7, 1)]
         [ConfigField("Scan Offset", "Sets the time that IoT Hub Exports are synchronized to.", 7, 2, 0x0350504D, Length=32, Flags =FormFlags.OpcOffset)]
         public String ScanOffset = "Hour";
+
+        [Label("Query", 8, 1)]
+        [ConfigField("Query", "Query used by the driver to export data.", 8, 2, 0x045100033, Length = 1024, DefaultOverride = true)]
+        public String Query = "SELECT ID, FULLNAME, CURRENTVALUEASREAL FROM CDBPOINT";
 
         [DataField("Read Count", "The number of messages the export scanner has received from Azure IoT Hub.", 0x03505047)]
         public UInt32 ReadCount;
