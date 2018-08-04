@@ -34,21 +34,21 @@ namespace IoTHubDBModule
     {
         [Label("Azure IoT Hub Settings", 1,1,Height = 2,Width = 5 )]
         [Label("End Point", 2, 1)]
-        [ConfigField("End Point", "The Event Hub-compatible endpoint string from Azure IoT Hub.", 2, 2, 0x04511001, Length = 96, DefaultOverride = true)]
+        [ConfigField("End Point", "The Event Hub-compatible endpoint string from Azure IoT Hub.", 2, 2, 0x04682000, Length = 96, DefaultOverride = true)]
         public String EndPoint;
 
 
         [Label("Device Settings", 4, 1, Height = 4, Width = 5)]
         [Label("Device Id", 5, 1)]
-        [ConfigField("Device Id", "The device Id that ClearSCADA is associated with.", 5, 2, 0x045110002, Length = 32, DefaultOverride = true)]
+        [ConfigField("Device Id", "The device Id that ClearSCADA is associated with.", 5, 2, 0x04682001, Length = 32, DefaultOverride = true)]
         public String DeviceId;
 
         [Label("Primary Connection String", 6, 1)]
-        [ConfigField("Primary Connect String", "The connection string containing the primary key from Azure IoT Hub.", 6, 2, 0x045110003, Length = 96, DefaultOverride = true)]
+        [ConfigField("Primary Connect String", "The connection string containing the primary key from Azure IoT Hub.", 6, 2, 0x04682002, Length = 96, DefaultOverride = true)]
         public String PrimaryConnectString;
 
         [Label("Secondary Connection String", 7, 1)]
-        [ConfigField("Secondary Connect String", "The connection string containing the secondary key from Azure IoT Hub.", 7, 2, 0x045110004, Length = 96, DefaultOverride = true)]
+        [ConfigField("Secondary Connect String", "The connection string containing the secondary key from Azure IoT Hub.", 7, 2, 0x04682003, Length = 96, DefaultOverride = true)]
         public String SecondaryConnectString;
 
     }
@@ -92,7 +92,7 @@ namespace IoTHubDBModule
         public String ScanOffset = "Hour";
 
         [Label("Query", 8, 1)]
-        [ConfigField("Query", "Query used by the driver to export data.", 8, 2, 0x045100033, Length = 1024, DefaultOverride = true)]
+        [ConfigField("Query", "Query used by the driver to export data.", 8, 2, 0x04682004, Length = 1024, DefaultOverride = true)]
         public String Query = "SELECT ID, FULLNAME, CURRENTVALUEASREAL FROM CDBPOINT";
 
         [DataField("Read Count", "The number of messages the export scanner has received from Azure IoT Hub.", 0x03505047)]
@@ -101,13 +101,13 @@ namespace IoTHubDBModule
         [DataField("Write Count", "The number of messages the export scanner has sent to Azure IoT Hub.", 0x03505049)]
         public UInt32 WriteCount;
 
-        [DataField("Last Error", "The text of the last device error.", 0x045100031)]
+        [DataField("Last Error", "The text of the last device error.", 0x04682005)]
         public String ErrMessage;
 
-        [DataField("Connected", "The state of the connection to Azure IoT Hub.", 0x045100032)]
+        [DataField("Connected", "The state of the connection to Azure IoT Hub.", 0x04682006)]
         public Boolean Connected;
 
-        [Aggregate("Enabled", "Azure IoT Hub", 0x04511000)]
+        [Aggregate("Enabled", "Azure IoT Hub", 0x04682007)]
         public AzureIotHubAggregate AzureIoTHub;
 
         // For future implementation. Dustin Symes 2017-12-19
