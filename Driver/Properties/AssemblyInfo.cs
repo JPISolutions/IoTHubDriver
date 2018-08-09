@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("JPI Solutions")]
 [assembly: AssemblyProduct("JPIIotHubDriver")]
-[assembly: AssemblyCopyright("Copyright © 2017 JPI Solutions")]
+[assembly: AssemblyCopyright("Copyright © 2018 JPI Solutions")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -32,5 +32,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("6.78.6533.2")]
-[assembly: AssemblyFileVersion("6.78.6533.2")]
+[assembly: AssemblyVersion("6.79.6785.3")]
+[assembly: AssemblyFileVersion("6.79.6785.3")]

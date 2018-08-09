@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("Debug - Alpha 0.0")]
 [assembly: AssemblyCompany("JPI Solutions")]
 [assembly: AssemblyProduct("JPIDBObjIotHub")]
-[assembly: AssemblyCopyright("Copyright © 2017 JPI Solutions")]
+[assembly: AssemblyCopyright("Copyright © 2018 JPI Solutions")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -35,5 +35,5 @@ using System.Runtime.InteropServices;
 // We are using the ClearSCADA major.minor.build numbers for the driver so we can 
 // identify which version it was compiled for. The revision number will be used to 
 // denote our internal versions, starting with 0. 
-[assembly: AssemblyVersion("6.78.6533.2")]
-[assembly: AssemblyFileVersion("6.78.6533.2")]
+[assembly: AssemblyVersion("6.79.6785.3")]
+[assembly: AssemblyFileVersion("6.79.6785.3")]
