@@ -9,7 +9,9 @@ using IoTHubDBModule;
 using System.IO;
 using System.Data.Odbc;
 using System.Data;
+using Microsoft.Azure.Devices;
 using Microsoft.Azure.Devices.Client;
+using Microsoft.Azure.Devices.Shared;
 using Newtonsoft.Json;
 using System.Net;
 using System.Diagnostics;
@@ -33,16 +35,15 @@ namespace IoTHubDriver
         }
     }
 
-    public class DrvCSScanner : DriverScanner<AzureIoTHubScanner>
+    public class AzIoTHubExportScanner : DriverScanner<AzureIoTHubExport>
     {
 
-        public DrvCSScanner(): base()
+        public AzIoTHubExportScanner(): base()
         {
 
         }
 
         static DeviceClient deviceClient;
-        
        
         public override SourceStatus OnDefine()
         {
@@ -93,8 +94,10 @@ namespace IoTHubDriver
                 // Can I get the SYSTEM name from inside the driver?
                 // How can I run this against a DB that is protected/secured?
                 string s = "DRIVER={ClearSCADA Driver};Server=MAIN;UID=;PWD=;LOCALTIME=False;LOGINTIMEOUT=6000";
-                System.Data.Odbc.OdbcConnection con = new System.Data.Odbc.OdbcConnection();
-                con.ConnectionString = s;
+                OdbcConnection con = new OdbcConnection
+                {
+                    ConnectionString = s
+                };
                 con.Open();
 
                 App.Log("OnScan: ODBC Connected");
@@ -129,7 +132,7 @@ namespace IoTHubDriver
             async Task SendDictToIoTHubAsync(Dictionary<string, string> dict)
             {
                 
-                var msg_dict = new Message(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(dict)));
+                var msg_dict = new Microsoft.Azure.Devices.Client.Message(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(dict)));
                 await deviceClient.SendEventAsync(msg_dict);
 
             }
@@ -138,7 +141,7 @@ namespace IoTHubDriver
             async Task SendStrToIoTHubAsync(string str )
             {
                 
-                var msg_dict = new Message(Encoding.UTF8.GetBytes(str));
+                var msg_dict = new Microsoft.Azure.Devices.Client.Message(Encoding.UTF8.GetBytes(str));
                 await deviceClient.SendEventAsync(msg_dict);
 
             }
@@ -146,5 +149,88 @@ namespace IoTHubDriver
         }
 
 
+    }
+
+
+    public class AzIoTHubImportScanner : DriverScanner<AzureIoTHubImport>
+    {
+
+        public AzIoTHubImportScanner() : base()
+        {
+
+        }
+
+        static ServiceClient serviceClient;
+        static RegistryManager registryManager;
+
+        public class Values
+        {
+            public string DisplayName;
+            public string Address;
+            public string Value;
+        }
+
+        public override SourceStatus OnDefine()
+        {
+            // Code for when the scanner is enabled. 
+            // Log the scanner state to the log file and set the scan rate and offset to those
+            // set on the object. 
+            App.Log("OnDefine: Scanner " + Convert.ToString(DBScanner.Id) + " Startup...");
+
+            try
+            {
+                App.Log("OnDefine: Set ScanRate: " + Convert.ToString(DBScanner.ScanRate) + " Set Offset: " + Convert.ToString(DBScanner.ScanOffset));
+                SetScanRate(DBScanner.ScanRate, DBScanner.ScanOffset, true);
+
+                App.Log("OnDefine: Connect to IoT Hub using primary connection string.");
+                serviceClient = ServiceClient.CreateFromConnectionString(DBScanner.AzureIoTHub.PrimaryConnectString);
+                registryManager = RegistryManager.CreateFromConnectionString(DBScanner.AzureIoTHub.PrimaryConnectString);
+
+                App.Log("OnDefine: Scanner Online.");
+                return SourceStatus.Online;
+            }
+
+            catch (Exception e)
+            {
+                App.Log("OnDefine: Uh oh, we had a problem connecting.");
+                App.Log("OnDefine: " + e.Message);
+                App.Log("OnDefine: Scanner Failed.");
+                return SourceStatus.Failed;
+
+            }
+        }
+
+        public override void OnUnDefine()
+        {
+            // Code for when the scanner is disabled or about to be saved
+            // Log to the log file and set the status to Offline.
+            App.Log("OnUnDefine: Scanner " + Convert.ToString(DBScanner.Id) + " disabled.");
+            SetStatus(SourceStatus.Offline);
+        }
+
+
+        public override void OnScan()
+        {
+
+            try
+            {
+                App.Log("OnScan: Start Scan");
+                App.Log("OnScan: Read EventHub Message");
+
+                App.Log("OnScan: Scan Completed.");
+
+            }
+
+            catch (Exception e)
+            {
+                App.Log("OnScan: Uh oh, something went wrong.");
+
+                App.Log("OnScan: Raising an alarm.");
+                SetStatus(SourceStatus.Failed);
+                SetFailReason(e.Message);
+
+                App.Log("OnScan: Error: " + e.Message);
+            }
+        }
     }
 }
