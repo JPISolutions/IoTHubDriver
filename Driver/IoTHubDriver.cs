@@ -12,9 +12,11 @@ using System.Data;
 using Microsoft.Azure.Devices;
 using Microsoft.Azure.Devices.Client;
 using Microsoft.Azure.Devices.Shared;
+using Microsoft.Azure.EventHubs;
 using Newtonsoft.Json;
 using System.Net;
 using System.Diagnostics;
+using System.Threading;
 
 namespace IoTHubDriver
 {
@@ -160,15 +162,10 @@ namespace IoTHubDriver
 
         }
 
-        static ServiceClient serviceClient;
-        static RegistryManager registryManager;
+        static EventHubClient eventHub;
+        static string[] d2cPartitions;
 
-        public class Values
-        {
-            public string DisplayName;
-            public string Address;
-            public string Value;
-        }
+        CancellationTokenSource cts = new CancellationTokenSource();
 
         public override SourceStatus OnDefine()
         {
@@ -183,9 +180,9 @@ namespace IoTHubDriver
                 SetScanRate(DBScanner.ScanRate, DBScanner.ScanOffset, true);
 
                 App.Log("OnDefine: Connect to IoT Hub using primary connection string.");
-                serviceClient = ServiceClient.CreateFromConnectionString(DBScanner.AzureIoTHub.PrimaryConnectString);
-                registryManager = RegistryManager.CreateFromConnectionString(DBScanner.AzureIoTHub.PrimaryConnectString);
-
+                eventHub = EventHubClient.CreateFromConnectionString(DBScanner.AzureIoTHub.EndPoint);
+                EventHubRuntimeInformation runtimeInfo = eventHub.GetRuntimeInformationAsync().Result;
+                d2cPartitions = runtimeInfo.PartitionIds;
                 App.Log("OnDefine: Scanner Online.");
                 return SourceStatus.Online;
             }
@@ -205,6 +202,7 @@ namespace IoTHubDriver
             // Code for when the scanner is disabled or about to be saved
             // Log to the log file and set the status to Offline.
             App.Log("OnUnDefine: Scanner " + Convert.ToString(DBScanner.Id) + " disabled.");
+            cts.Cancel();
             SetStatus(SourceStatus.Offline);
         }
 
@@ -216,6 +214,22 @@ namespace IoTHubDriver
             {
                 App.Log("OnScan: Start Scan");
                 App.Log("OnScan: Read EventHub Message");
+
+                // Code for reading the messages from the IoT Hub
+                //
+                //
+                
+                foreach (string partition in d2cPartitions)
+                {
+
+                    string tsk = ReceiveMessagesFromDeviceAsync(partition, cts.Token).Result;
+                    App.Log("Data: " + tsk);
+
+                }
+
+                //
+                //
+                // ----------------------------------------------
 
                 App.Log("OnScan: Scan Completed.");
 
@@ -231,6 +245,49 @@ namespace IoTHubDriver
 
                 App.Log("OnScan: Error: " + e.Message);
             }
+        }
+
+
+
+        async Task<string> ReceiveMessagesFromDeviceAsync(string partition, CancellationToken ct)
+        {
+            string text;
+            // Create the receiver using the default consumer group.
+            // For the purposes of this sample, read only messages sent since 
+            // the time the receiver is created. Typically, you don't want to skip any messages.
+            var eventHubReceiver = eventHub.CreateReceiver("$Default", partition, EventPosition.FromEnqueuedTime(DateTime.Now));
+            text = "Create receiver on partition: " + partition + "\n";
+            while (true)
+            {
+                if (ct.IsCancellationRequested) break;
+                text = text + "Listening for messages on: " + partition + "\n";
+                // Check for EventData - this methods times out if there is nothing to retrieve.
+                var events = await eventHubReceiver.ReceiveAsync(100);
+
+                // If there is data in the batch, process it.
+                if (events == null) continue;
+
+                foreach (EventData eventData in events)
+                {
+                    string data = Encoding.UTF8.GetString(eventData.Body.Array);
+                    text = text + "Message received on partition {0}:" + partition + "\n";
+                    text = text + "  {0}:" + data + "\n";
+                    text = text + "Application properties (set by device):" + "\n";
+                    foreach (var prop in eventData.Properties)
+                    {
+                        text = text + "  {0}: {1}"+ prop.Key + prop.Value + "\n";
+                    }
+                    text = text + "System properties (set by IoT Hub):" + "\n";
+                    foreach (var prop in eventData.SystemProperties)
+                    {
+                        text = text + "  {0}: {1}" + prop.Key + prop.Value + "\n";
+                    }
+                }
+
+                return text;
+            }
+
+            return "End";
         }
     }
 }
